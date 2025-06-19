@@ -7,9 +7,13 @@
     {
         "name": "Launch Chrome",
         "request": "launch",
-        "type": "chrome",
-        "url": "http://localhost:8080",
-        "webRoot": "${workspaceFolder}"
+        "type": "go",
+        "mode": "debug",
+        "program": "${workspaceFolder}/main.go",
+        "env": {
+            "WEATHER_API_KEY": "",
+            "WEATHER_API_LOCATION": "Tokyo"
+        }
     }
     ]
 }
