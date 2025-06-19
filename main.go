@@ -24,9 +24,10 @@ type APICondition struct {
 }
 
 type Output struct {
-	Text  string `json:"text"`
-	Alt   int    `json:"alt"`
-	Class string `json:"class"`
+	Text    string `json:"text"`
+	Alt     int    `json:"alt"`
+	Class   string `json:"class"`
+	Tooltip string `json:"tooltip"`
 }
 
 func main() {
@@ -46,24 +47,17 @@ func main() {
 		return
 	}
 
-	// fmt.Println("Raw response:")
-	// fmt.Println(string(body))
-
-	// Parse the response into our struct
 	var weatherData APIResponse
 	if err := json.Unmarshal(body, &weatherData); err != nil {
 		fmt.Printf("Error parsing JSON: %v\n", err)
 		return
 	}
 
-	// fmt.Printf("\nParsed weather data:\n")
-	// fmt.Printf("Temperature: %.1f°C\n", weatherData.Current.Temperature)
-	// fmt.Printf("Condition: %s\n", weatherData.Current.Condition.Text)
-
 	output := Output{
-		Text:  fmt.Sprintf("%3.1f°C (%s)", weatherData.Current.Temperature, weatherData.Current.Condition.Text),
-		Alt:   weatherData.Current.Condition.Code,
-		Class: "class-" + strconv.Itoa(weatherData.Current.Condition.Code),
+		Text:    fmt.Sprintf("%3.1f°C (%s)", weatherData.Current.Temperature, weatherData.Current.Condition.Text),
+		Alt:     weatherData.Current.Condition.Code,
+		Class:   "class-" + strconv.Itoa(weatherData.Current.Condition.Code),
+		Tooltip: getTooltip(weatherData.Current.Condition.Text),
 	}
 
 	s, err := json.Marshal(output)
@@ -79,67 +73,71 @@ func main() {
 	fmt.Println(string(s))
 }
 
+func getTooltip(value string) string {
+	a, ok := kanjiFuriganaMap[value]
+
+	if !ok {
+		return "Not found for value" + value
+	}
+
+	return fmt.Sprintf("%s \n\n\n"+
+		"------------"+
+		"(%s)", a.Kana, a.English)
+}
+
 type CodeTranslation struct {
 	Kana    string `json:"kana"`
 	English string `json:"english"`
 }
 
-var asd = map[int]CodeTranslation{
-	1000: {English: "Sunny", Kana: "はれ"},
-	1003: {English: "Partly cloudy", Kana: "ところによりくもり"},
-	1006: {English: "Cloudy", Kana: "くもり"},
-	1009: {English: "Overcast", Kana: "ほんくもり"},
-	1030: {English: "Mist", Kana: "もや"},
+var kanjiFuriganaMap = map[string]CodeTranslation{
+	"晴れ":         {Kana: "はれ", English: "Sunny"},
+	"快晴":         {Kana: "かいせい", English: "Clear"},
+	"所により曇り":     {Kana: "ところによりくもり", English: "Partly cloudy"},
+	"曇り":         {Kana: "くもり", English: "Cloudy"},
+	"本曇り":        {Kana: "ほんくもり", English: "Overcast"},
+	"もや":         {Kana: "もや", English: "Mist"},
+	"近くで所により雨":   {Kana: "ちかくでところによりあめ", English: "Patchy rain possible"},
+	"近くで所により雪":   {Kana: "ちかくでところによりゆき", English: "Patchy snow possible"},
+	"近くで所によりみぞれ": {Kana: "ちかくでところによりみぞれ", English: "Patchy sleet possible"},
+	"近くで所により着氷性の霧雨": {Kana: "ちかくでところによりちゃくひょうせいのきりさめ", English: "Patchy freezing drizzle possible"},
+	"近くで雷の発生":       {Kana: "ちかくでかみなりのはっせい", English: "Thundery outbreaks possible"},
+	"吹雪":            {Kana: "ふぶき", English: "Blowing snow"},
+	"猛吹雪":           {Kana: "もうふぶき", English: "Blizzard"},
+	"霧":             {Kana: "きり", English: "Fog"},
+	"着氷性の霧":         {Kana: "ちゃくひょうせいのきり", English: "Freezing fog"},
+	"所により霧雨":        {Kana: "ところによりきりさめ", English: "Patchy fog"},
+	"霧雨":            {Kana: "きりさめ", English: "Freezing drizzle"},
+	"着氷性の霧雨":        {Kana: "ちゃくひょうせいのきりさめ", English: "Heavy freezing drizzle"},
+	"強い着氷性の霧雨":      {Kana: "つよいちゃくひょうせいのきりさめ", English: "Heavy freezing drizzle"},
+	"所により弱い雨":       {Kana: "ところによりよわいあめ", English: "Light freezing rain"},
+	"弱い雨":           {Kana: "よわいあめ", English: "Light rain"},
+	"時々穏やかな雨":       {Kana: "ときどきおだやかなあめ", English: "Moderate rain at times"},
+	"穏やかな雨":         {Kana: "おだやかなあめ", English: "Moderate rain"},
+	"時々大雨":          {Kana: "ときどきおおあめ", English: "Heavy rain at times"},
+	"大雨":            {Kana: "おおあめ", English: "Heavy rain"},
+	"着氷性の弱い雨":       {Kana: "ちゃくひょうせいのよわいあめ", English: "Light freezing rain"},
+	"着氷性の穏やかな雨または大雨": {Kana: "ちゃくひょうせいのおだやかなあめまたはおおあめ", English: "Moderate or heavy freezing rain"},
+	"軽いみぞれ":        {Kana: "かるいみぞれ", English: "Light sleet"},
+	"穏やかなまたは強いみぞれ": {Kana: "おだやかなまたはつよいみぞれ", English: "Moderate or heavy sleet"},
+	"所により小雪":       {Kana: "ところによりこゆき", English: "Patchy light snow"},
+	"小雪":           {Kana: "こゆき", English: "Light snow"},
+	"所により穏やかな雪":    {Kana: "ところによりおだやかなゆき", English: "Patchy moderate snow"},
+	"穏やかな雪":        {Kana: "おだやかなゆき", English: "Moderate snow"},
+	"所により大雪":       {Kana: "ところによりおおゆき", English: "Patchy heavy snow"},
+	"大雪":           {Kana: "おおゆき", English: "Heavy snow"},
+	"凍雨":           {Kana: "とうう", English: "Freezing rain"},
+	"軽いにわか雨":       {Kana: "かるいにわかあめ", English: "Light rain"},
+	"穏やかなまたは強いにわか雨": {Kana: "おだやかなまたはつよいにわかあめ", English: "Moderate or heavy rain"},
+	"急な豪雨":           {Kana: "きゅうなごうう", English: "Heavy rain"},
+	"急な軽いみぞれ":        {Kana: "きゅうなかるいみぞれ", English: "Light sleet"},
+	"穏やかなまたは強い急なみぞれ": {Kana: "おだやかなまたはつよいきゅうなみぞれ", English: "Moderate or heavy sleet"},
+	"急な軽い雪":          {Kana: "きゅうなかるいゆき", English: "Light snow"},
+	"穏やかなまたは強い急な雪":   {Kana: "おだやかなまたはつよいきゅうなゆき", English: "Moderate or heavy snow"},
+	"軽い急な凍雨":         {Kana: "かるいきゅうなとうう", English: "Light freezing rain"},
+	"穏やかなまたは強い急な凍雨":  {Kana: "おだやかなまたはつよいきゅうなとうう", English: "Moderate or heavy freezing rain"},
+	"所により雷を伴う弱い雨":    {Kana: "ところによりかみなりをともなうよわいあめ", English: "Patchy light rain with thunder"},
+	"雷を伴う穏やかなまたは強い雨": {Kana: "かみなりをともなうおだやかなまたはつよいあめ", English: "Moderate or heavy rain with thunder"},
+	"雷を伴う軽い雪":        {Kana: "かみなりをともなうかるいゆき", English: "Light snow with thunder"},
+	"雷を伴う穏やかなまたは強い雪": {Kana: "かみなりをともなうおだやかなまたはつよいゆき", English: "Moderate or heavy snow with thunder"},
 }
-
-/*
-code,day,night,icon
-1000,Sunny,Clear,113
-1003,"Partly cloudy","Partly cloudy",116
-1006,Cloudy,Cloudy,119
-1009,Overcast,Overcast,122
-1030,Mist,Mist,143
-1063,"Patchy rain possible","Patchy rain possible",176
-1066,"Patchy snow possible","Patchy snow possible",179
-1069,"Patchy sleet possible","Patchy sleet possible",182
-1072,"Patchy freezing drizzle possible","Patchy freezing drizzle possible",185
-1087,"Thundery outbreaks possible","Thundery outbreaks possible",200
-1114,"Blowing snow","Blowing snow",227
-1117,Blizzard,Blizzard,230
-1135,Fog,Fog,248
-1147,"Freezing fog","Freezing fog",260
-1150,"Patchy light drizzle","Patchy light drizzle",263
-1153,"Light drizzle","Light drizzle",266
-1168,"Freezing drizzle","Freezing drizzle",281
-1171,"Heavy freezing drizzle","Heavy freezing drizzle",284
-1180,"Patchy light rain","Patchy light rain",293
-1183,"Light rain","Light rain",296
-1186,"Moderate rain at times","Moderate rain at times",299
-1189,"Moderate rain","Moderate rain",302
-1192,"Heavy rain at times","Heavy rain at times",305
-1195,"Heavy rain","Heavy rain",308
-1198,"Light freezing rain","Light freezing rain",311
-1201,"Moderate or heavy freezing rain","Moderate or heavy freezing rain",314
-1204,"Light sleet","Light sleet",317
-1207,"Moderate or heavy sleet","Moderate or heavy sleet",320
-1210,"Patchy light snow","Patchy light snow",323
-1213,"Light snow","Light snow",326
-1216,"Patchy moderate snow","Patchy moderate snow",329
-1219,"Moderate snow","Moderate snow",332
-1222,"Patchy heavy snow","Patchy heavy snow",335
-1225,"Heavy snow","Heavy snow",338
-1237,"Ice pellets","Ice pellets",350
-1240,"Light rain shower","Light rain shower",353
-1243,"Moderate or heavy rain shower","Moderate or heavy rain shower",356
-1246,"Torrential rain shower","Torrential rain shower",359
-1249,"Light sleet showers","Light sleet showers",362
-1252,"Moderate or heavy sleet showers","Moderate or heavy sleet showers",365
-1255,"Light snow showers","Light snow showers",368
-1258,"Moderate or heavy snow showers","Moderate or heavy snow showers",371
-1261,"Light showers of ice pellets","Light showers of ice pellets",374
-1264,"Moderate or heavy showers of ice pellets","Moderate or heavy showers of ice pellets",377
-1273,"Patchy light rain with thunder","Patchy light rain with thunder",386
-1276,"Moderate or heavy rain with thunder","Moderate or heavy rain with thunder",389
-1279,"Patchy light snow with thunder","Patchy light snow with thunder",392
-1282,"Moderate or heavy snow with thunder","Moderate or heavy snow with thunder",395
-*/
