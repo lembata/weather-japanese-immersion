@@ -81,9 +81,7 @@ func getTooltip(value string) string {
 		return "Not found for value" + value
 	}
 
-	return fmt.Sprintf("%s \n\n\n"+
-		"------------"+
-		"(%s)", a.Kana, a.English)
+	return fmt.Sprintf("%s\n\n\n---------------\n(%s)", a.Kana, a.English)
 }
 
 type CodeTranslation struct {
