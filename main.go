@@ -32,7 +32,8 @@ type Output struct {
 
 func main() {
 	apiKey := os.Getenv("WEATHER_API_KEY")
-	url := fmt.Sprintf("http://api.weatherapi.com/v1/current.json?q=Sofia&key=%s&lang=ja", apiKey)
+	location := os.Getenv("WEATHER_API_LOCATION")
+	url := fmt.Sprintf("http://api.weatherapi.com/v1/current.json?q=%s&key=%s&lang=ja", location, apiKey)
 
 	resp, err := http.Get(url)
 	if err != nil {
